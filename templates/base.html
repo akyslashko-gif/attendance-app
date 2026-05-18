@@ -179,8 +179,7 @@
       <div class="logo-divider"></div>
       <span class="logo-label">{% if lang == 'en' %}Attendance{% elif lang == 'bg' %}Присъствие{% else %}Учёт{% endif %}</span>
     </a>
-    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">{{ t.nav_checkin }}</a>
-    <a class="nav-link {% if request.path == '/plan' %}active{% endif %}" href="/plan">{{ t.nav_plan }}</a>
+    <a class="nav-link {% if request.path == '/' or request.path == '/plan' %}active{% endif %}" href="/plan">{{ t.nav_plan }}</a>
     <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard">{{ t.nav_calendar }}</a>
     <a class="nav-link {% if request.path == '/setup' %}active{% endif %}" href="/setup">{{ t.nav_employees }}</a>
     <div class="spacer"></div>

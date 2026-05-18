@@ -161,19 +161,7 @@ def month_cells(y, m, planned, today_iso, holidays):
 
 @app.route("/")
 def index():
-    return render_template("index.html",
-                           employees_by_unit=get_employees_by_unit(),
-                           today=date.today().isoformat())
-
-
-@app.route("/checkin", methods=["POST"])
-def checkin():
-    employee = request.form.get("employee", "").strip()
-    status = request.form.get("status", "").strip()
-    if not employee or not status:
-        return jsonify({"error": g.t["checkin_pick_status_err"]}), 400
-    save_attendance(employee, status)
-    return jsonify({"ok": True, "message": f"{employee} — {status}"})
+    return redirect(url_for("plan"))
 
 
 @app.route("/dashboard")
