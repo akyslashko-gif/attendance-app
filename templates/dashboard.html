@@ -69,12 +69,18 @@
 .btn-export:hover { background: #155e28; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,122,53,.3); }
 
 /* Month calendar */
+.calendar-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 12px rgba(29,31,46,.05);
+}
 .calendar {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(29,31,46,.05);
+  min-width: 560px;
 }
 .cal-header {
   display: grid;
@@ -211,6 +217,7 @@
 </div>
 
 {% if view == 'month' %}
+<div class="calendar-wrap">
 <div class="calendar">
   <div class="cal-header">
     {% for d in t.days %}
@@ -243,6 +250,7 @@
       {% endif %}
     {% endfor %}
   </div>
+</div>
 </div>
 
 {% else %}
