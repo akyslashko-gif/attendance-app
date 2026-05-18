@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}{{ t.nav_calendar }}{% endblock %}
+
+{% block styles %}
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: 0 2px 12px rgba(29,31,46,.05);
+}
+.stat-value { font-size: 32px; font-weight: 700; letter-spacing: -1px; }
+.stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+
+.toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.month-nav { display: flex; align-items: center; gap: 8px; }
+.month-label { font-size: 17px; font-weight: 700; min-width: 190px; text-align: center; color: var(--navy); }
+.nav-btn {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-s);
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+  color: var(--muted);
+}
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); background: #fff5f0; }
+
+.view-toggle {
+  display: flex;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+  margin-left: auto;
+}
+.view-btn {
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  border: none;
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .2s;
+}
+.view-btn.active { background: var(--accent); color: white; }
+.view-btn:hover:not(.active) { background: var(--bg); color: var(--text); }
+.btn-export {
+  background: #1a7a35;
+  color: white;
+  gap: 6px;
+}
+.btn-export:hover { background: #155e28; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,122,53,.3); }
+
+/* Month calendar */
+.calendar {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(29,31,46,.05);
+}
+.cal-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: var(--navy);
+}
+.cal-header span {
+  text-align: center;
+  padding: 11px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,.6);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-day {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 8px;
+  min-height: 96px;
+}
+.cal-day:nth-child(7n) { border-right: none; }
+.cal-day.empty { background: var(--bg); opacity: .5; }
+.cal-day.today .day-num {
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+}
+.cal-day.weekend .day-num { color: var(--absent); }
+.day-num { font-size: 13px; font-weight: 600; margin-bottom: 6px; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; }
+.day-chips { display: flex; flex-direction: column; gap: 3px; }
+.chip { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip-office { background: #d4f5df; color: #1a6b30; }
+.chip-remote { background: #fff3d6; color: #7a4b00; }
+.chip-absent { background: #ffd6d4; color: #7a0a06; }
+.cal-day.holiday { background: #fff8f0; }
+.cal-day.substitute { background: #fff8f0; border: 1px dashed var(--accent) !important; }
+.holiday-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.2;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.substitute-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--accent);
+  opacity: .7;
+  font-style: italic;
+}
+
+/* Week table */
+.week-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgba(29,31,46,.05);
+}
+.week-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--navy);
+  color: rgba(255,255,255,.65);
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+.week-table th.day-col { text-align: center; }
+.week-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+.week-table td.day-cell { text-align: center; }
+.week-table tr:last-child td { border-bottom: none; }
+.week-table tr:hover td { background: #fff5f0; }
+.emp-name { font-weight: 600; color: var(--navy); }
+
+.legend { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); font-weight: 500; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ t.dash_title }}</h1>
+<p class="page-subtitle">{{ month_name }}, {{ year }}</p>
+
+{% if employees %}
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-value" style="color:var(--office)">{{ today_office }}</div>
+    <div class="stat-label">{{ t.in_office_today }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:var(--remote)">{{ today_remote }}</div>
+    <div class="stat-label">{{ t.working_remote }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:var(--navy)">{{ employees|length }}</div>
+    <div class="stat-label">{{ t.total_employees }}</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="toolbar">
+  <div class="month-nav">
+    <button class="nav-btn" onclick="navigate(-1)">&#8592;</button>
+    <span class="month-label">{{ month_name }} {{ year }}</span>
+    <button class="nav-btn" onclick="navigate(1)">&#8594;</button>
+  </div>
+  <button class="btn btn-secondary" onclick="goToday()">{{ t.today_btn }}</button>
+  <div class="view-toggle">
+    <button class="view-btn {% if view=='month' %}active{% endif %}" onclick="setView('month')">{{ t.month_view }}</button>
+    <button class="view-btn {% if view=='week' %}active{% endif %}" onclick="setView('week')">{{ t.week_view }}</button>
+  </div>
+  <a class="btn btn-export" href="/export?year={{ year }}&month={{ month }}" title="Export to Excel">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Excel
+  </a>
+</div>
+
+{% if view == 'month' %}
+<div class="calendar">
+  <div class="cal-header">
+    {% for d in t.days %}
+    <span {% if loop.index >= 6 %}style="color:rgba(255,100,80,.8)"{% endif %}>{{ d }}</span>
+    {% endfor %}
+  </div>
+  <div class="cal-grid">
+    {% for cell in calendar_cells %}
+      {% if cell.day == 0 %}
+        <div class="cal-day empty"></div>
+      {% else %}
+        <div class="cal-day
+          {% if cell.is_today %}today{% endif %}
+          {% if cell.weekday >= 5 %}weekend{% endif %}
+          {% if cell.holiday and not cell.is_substitute %}holiday{% endif %}
+          {% if cell.is_substitute %}substitute{% endif %}">
+          <div class="day-num">{{ cell.day }}</div>
+          {% if cell.holiday %}
+          <div class="holiday-name" title="{{ cell.holiday }}">🇧🇬</div>
+          {% endif %}
+          <div class="day-chips">
+            {% for emp, status in cell.statuses %}
+              {% if status == 'Офис' %}<span class="chip chip-office" title="{{ emp }}">{{ emp }}</span>
+              {% elif status == 'Удалёнка' %}<span class="chip chip-remote" title="{{ emp }}">{{ emp }}</span>
+              {% else %}<span class="chip chip-absent" title="{{ emp }}">{{ emp }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+{% else %}
+<table class="week-table">
+  <thead>
+    <tr>
+      <th>{% if lang == 'en' %}Employee{% else %}Сотрудник{% endif %}</th>
+      {% for d in week_days %}
+      <th class="day-col" {% if d.is_today %}style="color:var(--accent)"{% endif %}>
+        {{ t.days[d.idx] }}<br>
+        <span style="font-weight:400;font-size:10px;opacity:.7">{{ d.date }}</span>
+      </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for emp in employees %}
+    <tr>
+      <td class="emp-name">{{ emp }}</td>
+      {% for d in week_days %}
+        {% set status = attendance_map.get((d.iso, emp), '') %}
+        <td class="day-cell">
+          {% if status == 'Офис' %}<span class="badge badge-office">🏢 {{ t.status_office }}</span>
+          {% elif status == 'Удалёнка' %}<span class="badge badge-remote">🏠 {{ t.status_remote }}</span>
+          {% elif status == 'Отсутствую' %}<span class="badge badge-absent">🚫 {{ t.status_absent }}</span>
+          {% else %}<span style="color:var(--border)">—</span>{% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--office)"></div>{{ t.legend_office }}</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--remote)"></div>{{ t.legend_remote }}</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--absent)"></div>{{ t.legend_absent }}</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let year = {{ year }}, month = {{ month }}, view = '{{ view }}';
+function navigate(dir) {
+  month += dir;
+  if (month > 12) { month = 1; year++; }
+  if (month < 1)  { month = 12; year--; }
+  window.location = `/dashboard?year=${year}&month=${month}&view=${view}`;
+}
+function goToday() {
+  const n = new Date();
+  window.location = `/dashboard?year=${n.getFullYear()}&month=${n.getMonth()+1}&view=${view}`;
+}
+function setView(v) {
+  window.location = `/dashboard?year=${year}&month=${month}&view=${v}`;
+}
+</script>
+{% endblock %}

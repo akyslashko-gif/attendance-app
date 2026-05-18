@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}{{ t.nav_checkin }}{% endblock %}
+
+{% block styles %}
+.hero { text-align: center; padding: 52px 0 36px; }
+.hero h1 { font-size: 34px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.hero p { color: var(--muted); font-size: 16px; }
+.hero-accent { color: var(--accent); }
+
+.checkin-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px;
+  max-width: 500px;
+  margin: 0 auto;
+  box-shadow: 0 2px 20px rgba(29,31,46,.06);
+}
+.form-group { margin-bottom: 24px; }
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+.select-wrapper { position: relative; }
+.select-wrapper::after {
+  content: "▾";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted2);
+  pointer-events: none;
+}
+select {
+  width: 100%;
+  padding: 13px 40px 13px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-s);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  appearance: none;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+select:focus { outline: none; border-color: var(--accent); background: white; }
+optgroup { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+option { font-size: 14px; text-transform: none; }
+
+.emp-preview {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: var(--radius-s);
+  margin-top: 10px;
+  border-left: 3px solid var(--accent);
+}
+.emp-preview.visible { display: flex; }
+.emp-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.emp-info-name { font-weight: 600; font-size: 14px; }
+.emp-info-pos  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+.status-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.status-btn {
+  padding: 18px 8px;
+  border-radius: var(--radius-s);
+  border: 2px solid var(--border);
+  background: var(--card);
+  cursor: pointer;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--muted);
+  transition: all .2s;
+}
+.status-btn:hover { border-color: var(--accent); color: var(--accent); background: #fff5f0; }
+.status-btn.selected-office { border-color: var(--office); background: #d4f5df; color: #1a6b30; }
+.status-btn.selected-remote { border-color: var(--remote); background: #fff3d6; color: #7a4b00; }
+.status-btn.selected-absent { border-color: var(--absent); background: #ffd6d4; color: #7a0a06; }
+.status-icon { font-size: 26px; display: block; margin-bottom: 7px; }
+
+.submit-btn { width: 100%; padding: 15px; font-size: 15px; margin-top: 4px; border-radius: var(--radius-s); }
+
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--navy);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transition: all .3s ease;
+  z-index: 200;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.error { background: var(--absent); }
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <h1>{{ t.checkin_greeting }}</h1>
+  <p id="dateLabel">{{ t.checkin_subtitle }}</p>
+</div>
+
+<div class="checkin-card">
+  <form id="checkinForm">
+    <div class="form-group">
+      <label class="field-label">{{ t.checkin_your_name }}</label>
+      <div class="select-wrapper">
+        <select name="employee" id="empSelect" required onchange="onEmpChange(this)">
+          <option value="">{{ t.checkin_select_placeholder }}</option>
+          {% for unit, members in employees_by_unit.items() %}
+          <optgroup label="{{ unit }}">
+            {% for emp in members %}
+            <option value="{{ emp.name }}" data-position="{{ emp.position }}" data-unit="{{ emp.unit }}">
+              {{ emp.name }}
+            </option>
+            {% endfor %}
+          </optgroup>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="emp-preview" id="empPreview">
+        <div class="emp-avatar" id="empAvatar"></div>
+        <div>
+          <div class="emp-info-name" id="empName"></div>
+          <div class="emp-info-pos"  id="empPos"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="field-label">{{ t.checkin_status_label }}</label>
+      <div class="status-grid">
+        <button type="button" class="status-btn" data-value="Офис" onclick="selectStatus(this,'office')">
+          <span class="status-icon">🏢</span>{{ t.status_office }}
+        </button>
+        <button type="button" class="status-btn" data-value="Удалёнка" onclick="selectStatus(this,'remote')">
+          <span class="status-icon">🏠</span>{{ t.status_remote }}
+        </button>
+        <button type="button" class="status-btn" data-value="Отсутствую" onclick="selectStatus(this,'absent')">
+          <span class="status-icon">🚫</span>{{ t.status_absent }}
+        </button>
+      </div>
+      <input type="hidden" name="status" id="statusInput">
+    </div>
+
+    <button type="submit" class="btn btn-primary submit-btn">{{ t.checkin_btn }}</button>
+  </form>
+</div>
+<div class="toast" id="toast"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const T = {
+  saving:    {{ t.checkin_saving         | tojson }},
+  pickStatus:{{ t.checkin_pick_status_err| tojson }},
+  connErr:   {{ t.checkin_conn_err       | tojson }},
+  submitBtn: {{ t.checkin_btn            | tojson }},
+  subtitle:  {{ t.checkin_subtitle       | tojson }},
+};
+const lang = {{ lang | tojson }};
+
+document.getElementById('dateLabel').textContent =
+  T.subtitle + ' — ' +
+  new Date().toLocaleDateString(lang === 'en' ? 'en-GB' : 'ru-RU',
+    {day:'numeric', month:'long', year:'numeric'});
+
+function onEmpChange(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const preview = document.getElementById('empPreview');
+  if (!opt.value) { preview.classList.remove('visible'); return; }
+  document.getElementById('empAvatar').textContent = opt.value.charAt(0);
+  document.getElementById('empName').textContent  = opt.value;
+  document.getElementById('empPos').textContent   =
+    [opt.dataset.position, opt.dataset.unit].filter(Boolean).join(' · ');
+  preview.classList.add('visible');
+}
+
+function selectStatus(btn, type) {
+  document.querySelectorAll('.status-btn').forEach(b => b.className = 'status-btn');
+  btn.classList.add('selected-' + type);
+  document.getElementById('statusInput').value = btn.dataset.value;
+}
+
+document.getElementById('checkinForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = new FormData(e.target);
+  if (!data.get('status')) { showToast(T.pickStatus, true); return; }
+  const btn = e.target.querySelector('.submit-btn');
+  btn.disabled = true; btn.textContent = T.saving;
+  try {
+    const res  = await fetch('/checkin', { method: 'POST', body: data });
+    const json = await res.json();
+    if (json.ok) {
+      showToast(json.message);
+      e.target.reset();
+      document.querySelectorAll('.status-btn').forEach(b => b.className = 'status-btn');
+      document.getElementById('statusInput').value = '';
+      document.getElementById('empPreview').classList.remove('visible');
+    } else { showToast(json.error, true); }
+  } catch { showToast(T.connErr, true); }
+  btn.disabled = false; btn.textContent = T.submitBtn;
+});
+
+function showToast(msg, error = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (error ? ' error' : '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+{% endblock %}

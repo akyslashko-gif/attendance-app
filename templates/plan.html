@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+{% block title %}{{ t.nav_plan }}{% endblock %}
+
+{% block styles %}
+.emp-selector {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  max-width: 940px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 12px rgba(29,31,46,.05);
+}
+.emp-selector label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  white-space: nowrap;
+}
+.select-wrapper { position: relative; flex: 1; min-width: 260px; }
+.select-wrapper::after {
+  content: "▾";
+  position: absolute;
+  right: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted2);
+  pointer-events: none;
+}
+select {
+  width: 100%;
+  padding: 11px 36px 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-s);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg);
+  appearance: none;
+  cursor: pointer;
+  transition: border-color .2s;
+  color: var(--text);
+}
+select:focus { outline: none; border-color: var(--accent); background: white; }
+optgroup { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+option { text-transform: none; font-size: 14px; }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 940px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.toolbar-label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.quick-btn {
+  padding: 8px 15px;
+  border-radius: var(--radius-s);
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s;
+  color: var(--muted);
+}
+.quick-btn:hover { border-color: var(--accent); color: var(--accent); background: #fff5f0; }
+.quick-btn.office { border-color: var(--office); color: #1a6b30; background: #d4f5df; }
+.quick-btn.remote { border-color: var(--remote); color: #7a4b00; background: #fff3d6; }
+
+.changes-badge {
+  background: var(--accent);
+  color: white;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 12px;
+  display: none;
+}
+.changes-badge.visible { display: inline-block; }
+
+.months-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 940px;
+}
+@media (max-width: 680px) { .months-grid { grid-template-columns: 1fr; } }
+
+.month-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(29,31,46,.05);
+}
+.month-title {
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  background: var(--navy);
+  letter-spacing: .1px;
+}
+.cal-head {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.cal-head span {
+  text-align: center;
+  padding: 9px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.cal-head span.we { color: var(--absent); }
+.cal-body { display: grid; grid-template-columns: repeat(7, 1fr); }
+
+.day-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .15s;
+  user-select: none;
+}
+.day-cell:nth-child(7n) { border-right: none; }
+.day-cell.empty { background: var(--bg); cursor: default; opacity: .3; }
+.day-cell.past  { opacity: .35; cursor: not-allowed; }
+.day-cell:not(.empty):not(.past):hover { background: #fff5f0; }
+.day-cell.today .day-num {
+  background: var(--accent);
+  color: white;
+  border-radius: 50%;
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+}
+.day-cell.weekend .day-num { color: var(--absent); }
+.day-num { font-size: 13px; font-weight: 600; line-height: 1; }
+.day-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.day-cell.s-office { background: #edfbf1; }
+.day-cell.s-remote { background: #fffaed; }
+.day-cell.s-absent { background: #fff2f1; }
+.day-cell.s-office .day-dot { background: var(--office); }
+.day-cell.s-remote .day-dot { background: var(--remote); }
+.day-cell.s-absent .day-dot { background: var(--absent); }
+.day-cell.changed { outline: 2px solid var(--accent); outline-offset: -2px; }
+.day-cell.holiday { background: #fff8f0; cursor: not-allowed; }
+.day-cell.holiday .day-num { color: var(--accent); }
+.day-cell.substitute { background: #fff8f0; cursor: not-allowed; outline: 2px dashed var(--accent); outline-offset: -2px; }
+.day-cell.substitute .day-num { color: var(--accent); }
+.holiday-dot { font-size: 9px; line-height: 1; }
+.holiday-tip {
+  font-size: 9px;
+  color: var(--accent);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  padding: 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.legend {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+  max-width: 940px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.legend-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); font-weight: 500; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.status-picker {
+  position: fixed;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(29,31,46,.18);
+  padding: 6px;
+  display: none;
+  z-index: 200;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 175px;
+}
+.status-picker.open { display: flex; }
+.picker-btn {
+  padding: 10px 14px;
+  border-radius: var(--radius-s);
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background .15s;
+}
+.picker-btn:hover { background: var(--bg); }
+.picker-office { color: #1a6b30; }
+.picker-remote { color: #7a4b00; }
+.picker-absent { color: #7a0a06; }
+.picker-clear  { color: var(--muted); }
+
+.placeholder-msg {
+  max-width: 940px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 56px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+  box-shadow: 0 2px 12px rgba(29,31,46,.05);
+}
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ t.plan_title }}</h1>
+<p class="page-subtitle">{{ t.plan_subtitle }}</p>
+
+<form class="emp-selector" method="GET" action="/plan">
+  <label>{{ t.plan_employee_label }}</label>
+  <div class="select-wrapper">
+    <select name="employee" onchange="this.form.submit()">
+      <option value="">{{ t.plan_select_placeholder }}</option>
+      {% for unit, members in employees_by_unit.items() %}
+      <optgroup label="{{ unit }}">
+        {% for emp in members %}
+        <option value="{{ emp.name }}" {% if emp.name == employee_name %}selected{% endif %}>
+          {{ emp.name }} — {{ emp.position }}
+        </option>
+        {% endfor %}
+      </optgroup>
+      {% endfor %}
+    </select>
+  </div>
+  <input type="hidden" name="year" value="{{ year }}">
+  <input type="hidden" name="month" value="{{ month }}">
+</form>
+
+{% if employee_name %}
+<div class="toolbar">
+  <span class="toolbar-label">{{ t.plan_quick }}</span>
+  <button class="quick-btn office" onclick="fillWeekdays('Офис')">🏢 {{ t.plan_all_office }}</button>
+  <button class="quick-btn remote" onclick="fillWeekdays('Удалёнка')">🏠 {{ t.plan_all_remote }}</button>
+  <button class="quick-btn"        onclick="clearAll()">{{ t.plan_clear }}</button>
+  <span class="changes-badge" id="changesBadge"></span>
+  <button class="btn btn-primary" id="saveBtn" onclick="saveAll()" style="margin-left:auto">{{ t.plan_save }}</button>
+</div>
+
+<div class="months-grid">
+  {% for my, mm, mn, mc in [
+    (year, month, month_name, cells),
+    (next_year, next_month, next_month_name, next_cells)
+  ] %}
+  <div class="month-card">
+    <div class="month-title">{{ mn }} {{ my }}</div>
+    <div class="cal-head">
+      {% for d in t.days %}
+      <span {% if loop.index >= 6 %}class="we"{% endif %}>{{ d }}</span>
+      {% endfor %}
+    </div>
+    <div class="cal-body">
+      {% for cell in mc %}
+        {% if cell is none %}
+          <div class="day-cell empty"></div>
+        {% else %}
+          <div class="day-cell
+            {% if cell.is_past %}past{% endif %}
+            {% if cell.is_today %}today{% endif %}
+            {% if cell.weekday >= 5 %}weekend{% endif %}
+            {% if cell.holiday and not cell.is_substitute %}holiday{% endif %}
+            {% if cell.is_substitute %}substitute{% endif %}
+            {% if cell.status == 'Офис' %}s-office
+            {% elif cell.status == 'Удалёнка' %}s-remote
+            {% elif cell.status == 'Отсутствую' %}s-absent{% endif %}"
+            data-iso="{{ cell.iso }}"
+            data-status="{{ cell.status }}"
+            data-past="{{ 'true' if cell.is_past else 'false' }}"
+            data-weekend="{{ 'true' if cell.weekday >= 5 else 'false' }}"
+            data-holiday="{{ cell.holiday }}"
+            title="{{ cell.holiday }}"
+            onclick="openPicker(event, this)">
+            <span class="day-num">{{ cell.day }}</span>
+            {% if cell.holiday %}
+            <span class="holiday-dot">🇧🇬</span>
+            {% else %}
+            <span class="day-dot"></span>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--office)"></div>{{ t.status_office }}</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--remote)"></div>{{ t.status_remote }}</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--absent)"></div>{{ t.status_absent }}</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--border)"></div>{{ t.plan_legend_unmarked }}</div>
+  <div class="legend-item" style="margin-left:auto;font-style:italic;font-size:12px">{{ t.plan_legend_hint }}</div>
+</div>
+
+{% else %}
+<div class="placeholder-msg">{{ t.plan_placeholder }}</div>
+{% endif %}
+
+<div class="status-picker" id="statusPicker">
+  <button class="picker-btn picker-office" onclick="setStatus('Офис')">🏢 {{ t.status_office }}</button>
+  <button class="picker-btn picker-remote" onclick="setStatus('Удалёнка')">🏠 {{ t.status_remote }}</button>
+  <button class="picker-btn picker-absent" onclick="setStatus('Отсутствую')">🚫 {{ t.status_absent }}</button>
+  <button class="picker-btn picker-clear"  onclick="setStatus('')">✕ {{ t.plan_clear }}</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const employee = {{ employee_name | tojson }};
+const T = {
+  saving:    {{ t.plan_saving     | tojson }},
+  saved:     {{ t.plan_saved      | tojson }},
+  noChanges: {{ t.plan_no_changes | tojson }},
+  save:      {{ t.plan_save       | tojson }},
+  ch1:       {{ t.plan_changes_1   | tojson }},
+  chFew:     {{ t.plan_changes_few | tojson }},
+  chMany:    {{ t.plan_changes_many| tojson }},
+  lang:      {{ lang | tojson }},
+};
+const changes = {};
+let activeCell = null;
+const picker = document.getElementById('statusPicker');
+
+function changesLabel(n) {
+  if (T.lang === 'en') return n + ' ' + (n === 1 ? T.ch1 : T.chMany);
+  if (n % 10 === 1 && n % 100 !== 11) return n + ' ' + T.ch1;
+  if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return n + ' ' + T.chFew;
+  return n + ' ' + T.chMany;
+}
+
+function openPicker(e, cell) {
+  if (cell.dataset.past === 'true' || cell.dataset.holiday) return;
+  e.stopPropagation();
+  activeCell = cell;
+  picker.classList.add('open');
+  const r = cell.getBoundingClientRect();
+  const ph = picker.offsetHeight || 176;
+  const left = Math.min(r.left, window.innerWidth - 195);
+  const openBelow = window.innerHeight - r.bottom >= ph + 8;
+  picker.style.left = left + 'px';
+  picker.style.top  = openBelow
+    ? (r.bottom + 6 + window.scrollY) + 'px'
+    : (r.top - ph - 6 + window.scrollY) + 'px';
+}
+document.addEventListener('click', () => picker.classList.remove('open'));
+picker.addEventListener('click', e => e.stopPropagation());
+
+function setStatus(status) {
+  if (!activeCell) return;
+  picker.classList.remove('open');
+  applyToCell(activeCell, status);
+}
+
+function applyToCell(cell, status) {
+  const orig = cell.dataset.status;
+  changes[cell.dataset.iso] = status;
+  cell.className = cell.className.replace(/\bs-office\b|\bs-remote\b|\bs-absent\b|\bchanged\b/g, '').trim();
+  if (status === 'Офис')        cell.classList.add('s-office');
+  else if (status === 'Удалёнка')   cell.classList.add('s-remote');
+  else if (status === 'Отсутствую') cell.classList.add('s-absent');
+  cell.classList.toggle('changed', status !== orig);
+  updateBadge();
+}
+
+function updateBadge() {
+  const n = Object.keys(changes).length;
+  const b = document.getElementById('changesBadge');
+  b.textContent = changesLabel(n);
+  b.classList.toggle('visible', n > 0);
+}
+
+function fillWeekdays(status) {
+  document.querySelectorAll('.day-cell:not(.empty):not(.past):not(.weekend):not(.holiday)')
+    .forEach(c => applyToCell(c, status));
+}
+function clearAll() {
+  document.querySelectorAll('.day-cell:not(.empty):not(.past):not(.holiday)')
+    .forEach(c => applyToCell(c, ''));
+}
+
+async function saveAll() {
+  if (!Object.keys(changes).length) { alert(T.noChanges); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = T.saving;
+  const res = await fetch('/plan/save', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ employee, days: changes })
+  });
+  const json = await res.json();
+  if (json.ok) {
+    document.querySelectorAll('.day-cell.changed').forEach(c => {
+      c.dataset.status = changes[c.dataset.iso] || '';
+      c.classList.remove('changed');
+    });
+    Object.keys(changes).forEach(k => delete changes[k]);
+    updateBadge();
+    showToast(T.saved);
+  }
+  btn.disabled = false; btn.textContent = T.save;
+}
+
+function showToast(msg) {
+  let t = document.getElementById('_toast');
+  if (!t) {
+    t = document.createElement('div'); t.id = '_toast';
+    Object.assign(t.style, {
+      position:'fixed', bottom:'32px', left:'50%',
+      transform:'translateX(-50%) translateY(120px)',
+      background:'var(--navy)', color:'white',
+      padding:'14px 28px', borderRadius:'100px',
+      fontSize:'14px', fontWeight:'600',
+      opacity:'0', transition:'all .3s ease', zIndex:'300'
+    });
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(120px)'; }, 3000);
+}
+</script>
+{% endblock %}

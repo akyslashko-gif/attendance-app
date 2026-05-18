@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}{{ t.nav_employees }}{% endblock %}
+
+{% block styles %}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  max-width: 860px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px rgba(29,31,46,.05);
+}
+.card h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+}
+.form-row-submit {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+input[type=text] {
+  padding: 10px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-s);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color .2s;
+}
+input[type=text]:focus { outline: none; border-color: var(--accent); background: white; }
+input[type=text]::placeholder { color: var(--muted2); }
+
+.unit-section { margin-bottom: 20px; }
+.unit-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  color: var(--muted);
+  padding: 8px 0 6px;
+  border-bottom: 2px solid var(--accent);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.unit-count {
+  background: var(--accent);
+  color: white;
+  border-radius: 100px;
+  font-size: 11px;
+  padding: 1px 7px;
+  font-weight: 700;
+}
+
+.emp-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  background: var(--bg);
+  border-radius: var(--radius-s);
+  margin-bottom: 6px;
+  transition: background .15s;
+}
+.emp-row:hover { background: #fff5f0; }
+.emp-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.emp-name { font-weight: 600; font-size: 14px; flex: 1; color: var(--navy); }
+.emp-pos  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.del-btn {
+  width: 30px; height: 30px;
+  border-radius: var(--radius-s);
+  border: none;
+  background: transparent;
+  color: var(--muted2);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+  line-height: 1;
+}
+.del-btn:hover { background: #ffd6d4; color: var(--absent); }
+
+.file-info {
+  background: var(--bg);
+  border-radius: var(--radius-s);
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-left: 3px solid var(--accent);
+}
+.file-info code {
+  color: var(--navy);
+  font-size: 12px;
+  word-break: break-all;
+  display: block;
+  margin-top: 4px;
+}
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ t.setup_title }}</h1>
+<p class="page-subtitle">{{ t.setup_subtitle }}</p>
+
+<div class="card">
+  <h2>{{ t.setup_add_title }}</h2>
+  <form id="addForm">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="field-label">{{ t.field_name }}</label>
+        <input type="text" name="name" placeholder="{{ t.field_name_ph }}" required>
+      </div>
+      <div class="form-group">
+        <label class="field-label">{{ t.field_position }}</label>
+        <input type="text" name="position" placeholder="{{ t.field_position_ph }}">
+      </div>
+      <div class="form-group">
+        <label class="field-label">{{ t.field_unit }}</label>
+        <input type="text" name="unit" placeholder="{{ t.field_unit_ph }}">
+      </div>
+      <div class="form-group">
+        <label class="field-label">{{ t.field_email }}</label>
+        <input type="text" name="email" placeholder="{{ t.field_email_ph }}">
+      </div>
+    </div>
+    <div class="form-row-submit">
+      <button type="submit" class="btn btn-primary">{{ t.btn_add }}</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>{{ t.setup_list_title }}</h2>
+  <div id="empList">
+    {% for unit, members in employees_by_unit.items() %}
+    <div class="unit-section">
+      <div class="unit-label">
+        {{ unit }}
+        <span class="unit-count">{{ members|length }}</span>
+      </div>
+      {% for emp in members %}
+      <div class="emp-row">
+        <div class="emp-avatar">{{ emp.name[0] }}</div>
+        <div style="flex:1">
+          <div class="emp-name">{{ emp.name }}</div>
+          <div class="emp-pos">{{ emp.position }}</div>
+        </div>
+        <button class="del-btn" onclick="deleteEmployee('{{ emp.name }}')" title="×">×</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="color:var(--muted);font-size:14px;text-align:center;padding:32px">
+      {{ t.setup_no_employees }}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>{{ t.setup_file_title }}</h2>
+  <div class="file-info">
+    <span style="font-size:24px;flex-shrink:0">📊</span>
+    <div>
+      {{ t.setup_file_label }}
+      <code>{{ excel_path }}</code>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--muted);margin-top:14px;line-height:1.6">
+    {{ t.setup_file_note }}
+  </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const T = { confirmDelete: {{ t.confirm_delete | tojson }} };
+
+document.getElementById('addForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true;
+  const res  = await fetch('/add-employee', { method: 'POST', body: new FormData(e.target) });
+  const json = await res.json();
+  if (json.ok) location.reload();
+  else { alert(json.error); btn.disabled = false; }
+});
+
+async function deleteEmployee(name) {
+  if (!confirm(`${T.confirmDelete} «${name}»?`)) return;
+  const data = new FormData();
+  data.append('name', name);
+  const res  = await fetch('/delete-employee', { method: 'POST', body: data });
+  const json = await res.json();
+  if (json.ok) location.reload();
+  else alert(json.error);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{% if lang == 'en' %}Attendance Tracker{% elif lang == 'bg' %}Присъствие{% else %}Учёт рабочего времени{% endif %}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #f7f7f7;
+      --card:     #ffffff;
+      --border:   #e8e8ec;
+      --text:     #1d1f2e;
+      --muted:    #6f6f79;
+      --muted2:   #a5a5ab;
+      --accent:   #ff6600;
+      --accent-h: #e55a00;
+      --blue:     #00b3ff;
+      --office:   #34c759;
+      --remote:   #ff9f0a;
+      --absent:   #ff3b30;
+      --navy:     #1d1f2e;
+      --radius:   16px;
+      --radius-s: 8px;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ───────────────────────────────────────────── */
+    nav {
+      background: var(--navy);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: 16px;
+      text-decoration: none;
+    }
+    .logo img {
+      height: 28px;
+      filter: brightness(0) invert(1);
+    }
+    .logo-divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(255,255,255,.25);
+    }
+    .logo-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,.7);
+      letter-spacing: .3px;
+    }
+    nav a.nav-link {
+      text-decoration: none;
+      color: rgba(255,255,255,.65);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: var(--radius-s);
+      transition: all .2s;
+    }
+    nav a.nav-link:hover { color: white; background: rgba(255,255,255,.1); }
+    nav a.nav-link.active { color: white; background: var(--accent); }
+    .spacer { flex: 1; }
+
+    /* Language toggle */
+    .lang-switch {
+      display: flex;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: var(--radius-s);
+      overflow: hidden;
+    }
+    .lang-btn {
+      padding: 5px 13px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,.55);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+    }
+    .lang-btn:hover { color: white; background: rgba(255,255,255,.1); }
+    .lang-btn.active { background: var(--accent); color: white; }
+
+    /* ── Layout ─────────────────────────────────────────── */
+    .container { max-width: 1140px; margin: 0 auto; padding: 36px 24px; }
+
+    /* ── Shared components ───────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-office { background: #d4f5df; color: #1a6b30; }
+    .badge-remote { background: #fff3d6; color: #7a4b00; }
+    .badge-absent { background: #ffd6d4; color: #7a0a06; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 11px 22px;
+      border-radius: var(--radius-s);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .2s ease;
+      text-decoration: none;
+      font-family: inherit;
+      letter-spacing: .1px;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-h); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,102,0,.3); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: #dcdce2; }
+
+    /* ── Section headings ────────────────────────────────── */
+    .page-title { font-size: 26px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .page-subtitle { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+
+    /* ── Cards ───────────────────────────────────────────── */
+    .tbi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+
+    {% block styles %}{% endblock %}
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="logo" href="/">
+      <img src="https://tbibank.bg/wp-content/themes/Avada-child-bg-mill20240911/assets/images/tbi-layout/logo/new-logo.svg"
+           alt="TBI Bank" onerror="this.style.display='none';this.nextElementSibling.style.display='none';this.nextElementSibling.nextElementSibling.textContent='TBI'">
+      <div class="logo-divider"></div>
+      <span class="logo-label">{% if lang == 'en' %}Attendance{% elif lang == 'bg' %}Присъствие{% else %}Учёт{% endif %}</span>
+    </a>
+    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">{{ t.nav_checkin }}</a>
+    <a class="nav-link {% if request.path == '/plan' %}active{% endif %}" href="/plan">{{ t.nav_plan }}</a>
+    <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard">{{ t.nav_calendar }}</a>
+    <a class="nav-link {% if request.path == '/setup' %}active{% endif %}" href="/setup">{{ t.nav_employees }}</a>
+    <div class="spacer"></div>
+    <div class="lang-switch">
+      <a class="lang-btn {% if lang == 'en' %}active{% endif %}" href="/set-lang/en">EN</a>
+      <a class="lang-btn {% if lang == 'bg' %}active{% endif %}" href="/set-lang/bg">BG</a>
+      <a class="lang-btn {% if lang == 'ru' %}active{% endif %}" href="/set-lang/ru">RU</a>
+    </div>
+  </nav>
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
