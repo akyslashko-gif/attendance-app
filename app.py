@@ -272,6 +272,27 @@ def plan_save():
     return jsonify({"ok": True, "saved": len(days)})
 
 
+UPLOAD_SECRET = os.environ.get("UPLOAD_SECRET", "")
+
+@app.route("/upload-data", methods=["GET", "POST"])
+def upload_data():
+    if not UPLOAD_SECRET:
+        return "Upload disabled", 403
+    if request.method == "GET":
+        return f'''<form method="post" enctype="multipart/form-data">
+            <input type="password" name="secret" placeholder="Secret key" required><br><br>
+            <input type="file" name="file" accept=".xlsx" required><br><br>
+            <button type="submit">Upload</button>
+        </form>'''
+    if request.form.get("secret") != UPLOAD_SECRET:
+        return "Wrong secret", 403
+    f = request.files.get("file")
+    if not f or not f.filename.endswith(".xlsx"):
+        return "No valid file", 400
+    f.save(EXCEL_FILE)
+    return "Uploaded successfully! Go to <a href='/setup'>/setup</a> to verify."
+
+
 @app.route("/export")
 def export():
     from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
