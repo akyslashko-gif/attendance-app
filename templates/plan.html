@@ -204,6 +204,20 @@ option { text-transform: none; font-size: 14px; }
   min-width: 175px;
 }
 .status-picker.open { display: flex; }
+@media (max-width: 600px) {
+  .status-picker {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    border-radius: 16px 16px 0 0;
+    padding: 12px 8px 24px;
+    min-width: unset;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .picker-btn { padding: 14px 18px; font-size: 16px; }
+}
 .picker-btn {
   padding: 10px 14px;
   border-radius: var(--radius-s);
@@ -368,14 +382,15 @@ function openPicker(e, cell) {
   e.stopPropagation();
   activeCell = cell;
   picker.classList.add('open');
+  if (window.innerWidth <= 600) return; // mobile: bottom sheet, no positioning needed
   const r = cell.getBoundingClientRect();
   const ph = picker.offsetHeight || 176;
-  const left = Math.min(r.left, window.innerWidth - 195);
+  const left = Math.min(Math.max(8, r.left), window.innerWidth - 195);
   const openBelow = window.innerHeight - r.bottom >= ph + 8;
   picker.style.left = left + 'px';
   picker.style.top  = openBelow
-    ? (r.bottom + 6 + window.scrollY) + 'px'
-    : (r.top - ph - 6 + window.scrollY) + 'px';
+    ? (r.bottom + 6) + 'px'
+    : (r.top - ph - 6) + 'px';
 }
 document.addEventListener('click', () => picker.classList.remove('open'));
 picker.addEventListener('click', e => e.stopPropagation());
