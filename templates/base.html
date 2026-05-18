@@ -54,20 +54,11 @@
       margin-right: 16px;
       text-decoration: none;
     }
-    .logo svg {
-      height: 28px;
-    }
-    .logo-divider {
-      width: 1px;
-      height: 20px;
-      background: rgba(255,255,255,.25);
-    }
-    .logo-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: rgba(255,255,255,.7);
-      letter-spacing: .3px;
-    }
+    .logo svg { height: 28px; }
+    .logo-divider { width: 1px; height: 20px; background: rgba(255,255,255,.25); }
+    .logo-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.7); letter-spacing: .3px; }
+
+    .nav-links { display: flex; align-items: center; gap: 4px; }
     nav a.nav-link {
       text-decoration: none;
       color: rgba(255,255,255,.65);
@@ -105,8 +96,61 @@
     .lang-btn:hover { color: white; background: rgba(255,255,255,.1); }
     .lang-btn.active { background: var(--accent); color: white; }
 
+    /* Hamburger */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 36px; height: 36px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      margin-left: auto;
+    }
+    .hamburger span {
+      display: block;
+      height: 2px;
+      background: white;
+      border-radius: 2px;
+      transition: all .25s;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* Mobile nav drawer */
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      top: 60px; left: 0; right: 0;
+      background: var(--navy);
+      padding: 12px 16px 20px;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 99;
+      border-top: 1px solid rgba(255,255,255,.1);
+      box-shadow: 0 8px 24px rgba(0,0,0,.3);
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a.nav-link { padding: 12px 16px; font-size: 15px; border-radius: var(--radius-s); }
+    .mobile-menu .lang-switch { margin-top: 8px; align-self: flex-start; }
+
+    @media (max-width: 680px) {
+      nav { padding: 0 16px; }
+      .nav-links { display: none; }
+      .spacer { display: none; }
+      .lang-switch.desktop { display: none; }
+      .hamburger { display: flex; }
+      .logo-label { display: none; }
+      .logo-divider { display: none; }
+    }
+
     /* ── Layout ─────────────────────────────────────────── */
     .container { max-width: 1140px; margin: 0 auto; padding: 36px 24px; }
+    @media (max-width: 680px) { .container { padding: 20px 12px; } }
+    @media (max-width: 680px) { .page-title { font-size: 20px; } }
 
     /* ── Shared components ───────────────────────────────── */
     .badge {
@@ -179,19 +223,50 @@
       <div class="logo-divider"></div>
       <span class="logo-label">{% if lang == 'en' %}Attendance{% elif lang == 'bg' %}Присъствие{% else %}Учёт{% endif %}</span>
     </a>
-    <a class="nav-link {% if request.path == '/' or request.path == '/plan' %}active{% endif %}" href="/plan">{{ t.nav_plan }}</a>
-    <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard">{{ t.nav_calendar }}</a>
-    <a class="nav-link {% if request.path == '/setup' %}active{% endif %}" href="/setup">{{ t.nav_employees }}</a>
+    <div class="nav-links">
+      <a class="nav-link {% if request.path == '/' or request.path == '/plan' %}active{% endif %}" href="/plan">{{ t.nav_plan }}</a>
+      <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard">{{ t.nav_calendar }}</a>
+      <a class="nav-link {% if request.path == '/setup' %}active{% endif %}" href="/setup">{{ t.nav_employees }}</a>
+    </div>
     <div class="spacer"></div>
-    <div class="lang-switch">
+    <div class="lang-switch desktop">
       <a class="lang-btn {% if lang == 'en' %}active{% endif %}" href="/set-lang/en">EN</a>
       <a class="lang-btn {% if lang == 'bg' %}active{% endif %}" href="/set-lang/bg">BG</a>
       <a class="lang-btn {% if lang == 'ru' %}active{% endif %}" href="/set-lang/ru">RU</a>
     </div>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
+  <div class="mobile-menu" id="mobileMenu">
+    <a class="nav-link {% if request.path == '/' or request.path == '/plan' %}active{% endif %}" href="/plan">{{ t.nav_plan }}</a>
+    <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard">{{ t.nav_calendar }}</a>
+    <a class="nav-link {% if request.path == '/setup' %}active{% endif %}" href="/setup">{{ t.nav_employees }}</a>
+    <div class="lang-switch" style="margin-top:12px">
+      <a class="lang-btn {% if lang == 'en' %}active{% endif %}" href="/set-lang/en">EN</a>
+      <a class="lang-btn {% if lang == 'bg' %}active{% endif %}" href="/set-lang/bg">BG</a>
+      <a class="lang-btn {% if lang == 'ru' %}active{% endif %}" href="/set-lang/ru">RU</a>
+    </div>
+  </div>
   <div class="container">
     {% block content %}{% endblock %}
   </div>
+  <script>
+    function toggleMenu() {
+      const btn = document.getElementById('hamburger');
+      const menu = document.getElementById('mobileMenu');
+      btn.classList.toggle('open');
+      menu.classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      const btn = document.getElementById('hamburger');
+      const menu = document.getElementById('mobileMenu');
+      if (!btn.contains(e.target) && !menu.contains(e.target)) {
+        btn.classList.remove('open');
+        menu.classList.remove('open');
+      }
+    });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
